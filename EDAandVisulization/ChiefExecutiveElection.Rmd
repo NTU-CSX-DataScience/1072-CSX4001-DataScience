@@ -1,0 +1,35 @@
+---
+title: "Chief Executive Election"
+author: "Pecu Tsai"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Load Files
+```{r include=FALSE}
+allData = data.frame()
+for(fid in c(1:9))
+{
+  filename = paste0("data/20180",as.character(fid),"_data.csv")
+  tempData = data.table::fread(filename, data.table = F,encoding = 'UTF-8')
+  allData = rbind(allData, tempData)
+}
+```
+比較韓國瑜與陳其邁的 comment_count 跟 like_count 並做圖表示。
+```{r include=FALSE}
+FishId <- which(grepl("韓國瑜", allData$Page_Name) == TRUE)
+ChenId <- which(grepl("陳其邁", allData$Page_Name) == TRUE)
+
+comment_count = rbind(allData[FishId,c(2,13)], allData[ChenId,c(2,13)])
+
+require(ggplot2)
+g <- ggplot(comment_count, aes(Page_Name))
+g + geom_bar()
+
+```
+
