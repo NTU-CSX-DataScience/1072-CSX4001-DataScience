@@ -72,6 +72,67 @@ myFUN<- function(str) {
 
 segment = apply(matrix(HCmessageAll$messageByName), 1, myFUN)
 ```
+
+## 以原始的 DTM 製作出 LDA (Latent Dirichlet Allocation) 主題歸納 (從文集中抽取隱藏「主題」thematic structures 的技術方法)
+```{r lda, message=FALSE, warning=FALSE}
+# 韓國瑜相關的 page 有三個
+R = table(segment[[1]])
+L = table(segment[[2]])
+M_R = merge(x = R, y = L, by = "Var1", all = TRUE)
+DTM_H = merge(x = M_R, y = table(segment[[3]]), by = "Var1", all = TRUE)
+DTM_H[is.na(DTM_H)] <- 0
+rownames(DTM_H) = DTM_H$Var1
+DTM_H = DTM_H[,-1]
+
+# 畫出韓國瑜發文的主題歸納
+library(topicmodels)
+dtm_lda <- LDA(t(DTM_H), k = 8, control = list(seed = 1234))
+
+library(tidytext)
+dtm_topics <- tidy(dtm_lda, matrix = "beta")
+
+top_terms <- dtm_topics %>%
+  group_by(topic) %>%
+  top_n(10, beta) %>%
+  ungroup() %>%
+  arrange(topic, -beta)
+
+top_terms %>%
+  mutate(term = reorder(term, beta)) %>%
+  ggplot(aes(term, beta, fill = factor(topic))) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~ topic, scales = "free") +
+  coord_flip() +
+  theme(axis.text.y=element_text(colour="black", family="Heiti TC Light"))
+
+# 陳其邁相關的 page 有一個
+DTM_C = merge(x = table(segment[[4]]), y = table(segment[[3]]), by = "Var1", all = TRUE)
+DTM_C[is.na(DTM_C)] <- 0
+rownames(DTM_C) = DTM_C$Var1
+DTM_C = DTM_C[,-1]
+
+# 畫出陳其邁發文與韓國瑜粉絲志工的主題歸納
+library(topicmodels)
+dtm_lda <- LDA(t(DTM_C), k = 8, control = list(seed = 1234))
+
+library(tidytext)
+dtm_topics <- tidy(dtm_lda, matrix = "beta")
+
+top_terms <- dtm_topics %>%
+  group_by(topic) %>%
+  top_n(10, beta) %>%
+  ungroup() %>%
+  arrange(topic, -beta)
+
+top_terms %>%
+  mutate(term = reorder(term, beta)) %>%
+  ggplot(aes(term, beta, fill = factor(topic))) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~ topic, scales = "free") +
+  coord_flip() +
+  theme(axis.text.y=element_text(colour="black", family="Heiti TC Light"))
+```
+
 ## 檢查一下目前的詞頻排序，分別排出各 page 的前 20 大詞頻字
 ```{r freq}
 HCmessageAll$Page_Name[1]
